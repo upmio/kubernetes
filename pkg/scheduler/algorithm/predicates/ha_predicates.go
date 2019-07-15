@@ -6,22 +6,22 @@ import (
 )
 
 const (
-	HAGroupLabel = "ha.app.group"
+	HostHAGroupLabel = "ha.host.group"
 )
 
 var (
-	ErrHAGroupExistPod = newPredicateFailureError(HaGroupPred, "the node(s)  had pod with the same HAGroupLabel yet")
+	ErrHAGroupExistPod = newPredicateFailureError(HostHaGroupPred, "the node(s)  had pod with the same HAGroupLabel yet")
 )
 
 func HAGroupPredicates(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedulernodeinfo.NodeInfo) (bool, []PredicateFailureReason, error) {
-	ha, ok := pod.Labels[HAGroupLabel]
+	ha, ok := pod.Labels[HostHAGroupLabel]
 	if !ok {
 		return true, nil, nil
 	}
 
 	find := false
 	for _, pod := range nodeInfo.Pods() {
-		_ha, ok := pod.Labels[HAGroupLabel]
+		_ha, ok := pod.Labels[HostHAGroupLabel]
 		if !ok {
 			continue
 		}

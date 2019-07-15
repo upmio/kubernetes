@@ -52,7 +52,9 @@ import (
 )
 
 const (
-	HaGroupPred = "HAGroup"
+	CheckLocalDiskPred = "CheckLocalDiskPressure"
+	HostHaGroupPred    = "hostHAGroup"
+
 	// MatchInterPodAffinityPred defines the name of predicate MatchInterPodAffinity.
 	MatchInterPodAffinityPred = "MatchInterPodAffinity"
 	// CheckVolumeBindingPred defines the name of predicate CheckVolumeBinding.
@@ -143,7 +145,7 @@ const (
 // The order is based on the restrictiveness & complexity of predicates.
 // Design doc: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/scheduling/predicates-ordering.md
 var (
-	predicatesOrdering = []string{HaGroupPred, CheckNodeConditionPred, CheckNodeUnschedulablePred,
+	predicatesOrdering = []string{HostHaGroupPred, CheckNodeConditionPred, CheckNodeUnschedulablePred,
 		GeneralPred, HostNamePred, PodFitsHostPortsPred,
 		MatchNodeSelectorPred, PodFitsResourcesPred, NoDiskConflictPred,
 		PodToleratesNodeTaintsPred, PodToleratesNodeNoExecuteTaintsPred, CheckNodeLabelPresencePred,
