@@ -39,6 +39,8 @@ func init() {
 
 func defaultPredicates() sets.String {
 	return sets.NewString(
+		predicates.HaGroupPred,
+		predicates.PodFitsResourcesPred,
 		predicates.NoVolumeZoneConflictPred,
 		predicates.MaxEBSVolumeCountPred,
 		predicates.MaxGCEPDVolumeCountPred,

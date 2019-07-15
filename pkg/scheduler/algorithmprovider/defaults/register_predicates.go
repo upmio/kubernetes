@@ -22,6 +22,9 @@ import (
 )
 
 func init() {
+
+	factory.RegisterFitPredicate(predicates.HaGroupPred, predicates.HAGroupPredicates)
+
 	// Register functions that extract metadata used by predicates computations.
 	factory.RegisterPredicateMetadataProducerFactory(
 		func(args factory.PluginFactoryArgs) predicates.PredicateMetadataProducer {
