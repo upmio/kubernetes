@@ -52,8 +52,8 @@ import (
 )
 
 const (
-	CheckLocalDiskPred = "CheckLocalDiskPressure"
-	HostHaGroupPred    = "hostHAGroup"
+	CheckLocalVolumePred = "checkLocalVolumePressure"
+	HostHaGroupPred      = "hostHAGroup"
 
 	// MatchInterPodAffinityPred defines the name of predicate MatchInterPodAffinity.
 	MatchInterPodAffinityPred = "MatchInterPodAffinity"
@@ -145,13 +145,14 @@ const (
 // The order is based on the restrictiveness & complexity of predicates.
 // Design doc: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/scheduling/predicates-ordering.md
 var (
-	predicatesOrdering = []string{HostHaGroupPred, CheckNodeConditionPred, CheckNodeUnschedulablePred,
-		GeneralPred, HostNamePred, PodFitsHostPortsPred,
+	predicatesOrdering = []string{CheckNodeConditionPred, CheckNodeUnschedulablePred,
+		GeneralPred, HostNamePred, PodFitsHostPortsPred, HostHaGroupPred,
 		MatchNodeSelectorPred, PodFitsResourcesPred, NoDiskConflictPred,
 		PodToleratesNodeTaintsPred, PodToleratesNodeNoExecuteTaintsPred, CheckNodeLabelPresencePred,
 		CheckServiceAffinityPred, MaxEBSVolumeCountPred, MaxGCEPDVolumeCountPred, MaxCSIVolumeCountPred,
 		MaxAzureDiskVolumeCountPred, MaxCinderVolumeCountPred, CheckVolumeBindingPred, NoVolumeZoneConflictPred,
-		CheckNodeMemoryPressurePred, CheckNodePIDPressurePred, CheckNodeDiskPressurePred, MatchInterPodAffinityPred}
+		CheckNodeMemoryPressurePred, CheckNodePIDPressurePred, CheckNodeDiskPressurePred, MatchInterPodAffinityPred,
+		CheckLocalVolumePred}
 )
 
 // FitPredicate is a function that indicates if a pod fits into an existing node.

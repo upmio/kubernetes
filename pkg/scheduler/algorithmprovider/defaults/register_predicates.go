@@ -24,6 +24,7 @@ import (
 func init() {
 
 	factory.RegisterFitPredicate(predicates.HostHaGroupPred, predicates.HAGroupPredicates)
+	factory.RegisterFitPredicate(predicates.CheckLocalVolumePred, predicates.LocalVolumePredicates)
 
 	// Register functions that extract metadata used by predicates computations.
 	factory.RegisterPredicateMetadataProducerFactory(

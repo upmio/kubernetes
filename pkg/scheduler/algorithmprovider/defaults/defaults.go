@@ -52,6 +52,7 @@ func defaultPredicates() sets.String {
 		predicates.CheckNodeMemoryPressurePred,
 		predicates.CheckNodeDiskPressurePred,
 		predicates.CheckNodePIDPressurePred,
+		predicates.CheckLocalVolumePred,
 		predicates.CheckNodeConditionPred,
 		predicates.PodToleratesNodeTaintsPred,
 		predicates.CheckVolumeBindingPred,
