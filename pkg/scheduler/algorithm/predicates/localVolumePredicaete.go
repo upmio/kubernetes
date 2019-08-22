@@ -11,12 +11,20 @@ import (
 	schedulernodeinfo "k8s.io/kubernetes/pkg/scheduler/nodeinfo"
 )
 
+type UsageLimit struct {
+	MemLimit     int `json:"memory"`
+	StorageLimit int `json:"storage"`
+	CPULimit     int `json:"cpu"`
+	PodNum       int `json:"pod"`
+}
+
 var (
 	ErrLocalVolumePressure = newPredicateFailureError(CheckLocalVolumePred, "the node(s) local vg Pressure")
 	ErrLocalVolumeNotExit  = newPredicateFailureError(CheckLocalVolumePred, "the node(s) not has related resouce")
 
 	PodLocalVolumeRequestAnnocation = "vg.localvolume.request"
 	NodeLocalVolumeAnnocation       = "vg.localvolume.cability"
+	NodeUsageLimtAnnocation         = "node.usage.limit"
 )
 
 func LocalVolumePredicates(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedulernodeinfo.NodeInfo) (bool, []PredicateFailureReason, error) {
@@ -34,6 +42,19 @@ func LocalVolumePredicates(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedu
 	nodecability, err := getNodeCability(nodeInfo)
 	if err != nil {
 		return false, nil, fmt.Errorf(" %s:getNodeCability fail:%s", nodeInfo.Node().GetName(), err.Error())
+	}
+
+	storLimit := 100
+	nodeLimitStr, ok := nodeInfo.Node().Annotations[NodeUsageLimtAnnocation]
+	if ok {
+		limit := UsageLimit{}
+		err := json.Unmarshal([]byte(nodeLimitStr), &limit)
+		if err != nil {
+			return false, nil, fmt.Errorf("Unmarshal %s fail:%s", NodeUsageLimtAnnocation, err.Error())
+		}
+		if limit.StorageLimit > 0 && limit.StorageLimit < 100 {
+			storLimit = limit.StorageLimit
+		}
 	}
 
 	//统计已使用
@@ -65,9 +86,13 @@ func LocalVolumePredicates(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedu
 			return false, []PredicateFailureReason{ErrLocalVolumeNotExit}, nil // fmt.Errorf("%s:node not have %s type resouce", nodeInfo.Node().GetName(), name)
 		}
 
-		if cabilityquantity.Cmp(uesdquantity) < 0 {
+		if uesdquantity.Value() > cabilityquantity.Value()*int64(storLimit)/100 {
 			return false, []PredicateFailureReason{ErrLocalVolumePressure}, nil
 		}
+
+		// if cabilityquantity.Cmp(uesdquantity) < 0 {
+		// 	return false, []PredicateFailureReason{ErrLocalVolumePressure}, nil
+		// }
 	}
 
 	return true, nil, nil

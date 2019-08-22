@@ -17,6 +17,7 @@ limitations under the License.
 package predicates
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -52,8 +53,8 @@ import (
 )
 
 const (
-	CheckLocalVolumePred = "checkLocalVolumePressure"
-	HostHaGroupPred      = "hostHAGroup"
+	CheckLocalVolumePred = "CheckLocalVolumePressure"
+	HostHaGroupPred      = "HostHAGroup"
 
 	// MatchInterPodAffinityPred defines the name of predicate MatchInterPodAffinity.
 	MatchInterPodAffinityPred = "MatchInterPodAffinity"
@@ -777,7 +778,31 @@ func PodFitsResources(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedulerno
 	}
 
 	var predicateFails []PredicateFailureReason
+	cpuLimit, memLimit := 100, 100
+	limit := UsageLimit{}
+
+	limitstr, ok := node.Annotations[NodeUsageLimtAnnocation]
+	if ok {
+		err := json.Unmarshal([]byte(limitstr), &limit)
+		if err != nil {
+			return false, predicateFails, fmt.Errorf("%s:Unmarshal %s fail:%s", node.GetName(), NodeUsageLimtAnnocation, err.Error())
+		}
+
+		if limit.CPULimit > 0 && limit.CPULimit < 100 {
+			cpuLimit = limit.CPULimit
+		}
+
+		if limit.MemLimit > 0 && limit.MemLimit < 100 {
+			memLimit = limit.MemLimit
+		}
+
+	}
+
 	allowedPodNumber := nodeInfo.AllowedPodNumber()
+	if limit.CPULimit > 0 && limit.CPULimit < allowedPodNumber {
+		allowedPodNumber = limit.CPULimit
+	}
+
 	if len(nodeInfo.Pods())+1 > allowedPodNumber {
 		predicateFails = append(predicateFails, NewInsufficientResourceError(v1.ResourcePods, 1, int64(len(nodeInfo.Pods())), int64(allowedPodNumber)))
 	}
@@ -803,10 +828,10 @@ func PodFitsResources(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedulerno
 	}
 
 	allocatable := nodeInfo.AllocatableResource()
-	if allocatable.MilliCPU < podRequest.MilliCPU+nodeInfo.RequestedResource().MilliCPU {
+	if allocatable.MilliCPU*int64(cpuLimit)/100 < podRequest.MilliCPU+nodeInfo.RequestedResource().MilliCPU {
 		predicateFails = append(predicateFails, NewInsufficientResourceError(v1.ResourceCPU, podRequest.MilliCPU, nodeInfo.RequestedResource().MilliCPU, allocatable.MilliCPU))
 	}
-	if allocatable.Memory < podRequest.Memory+nodeInfo.RequestedResource().Memory {
+	if allocatable.Memory*int64(memLimit)/100 < podRequest.Memory+nodeInfo.RequestedResource().Memory {
 		predicateFails = append(predicateFails, NewInsufficientResourceError(v1.ResourceMemory, podRequest.Memory, nodeInfo.RequestedResource().Memory, allocatable.Memory))
 	}
 	if allocatable.EphemeralStorage < podRequest.EphemeralStorage+nodeInfo.RequestedResource().EphemeralStorage {
