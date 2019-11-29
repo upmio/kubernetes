@@ -23,10 +23,12 @@ import (
 
 	"k8s.io/klog"
 	"k8s.io/kubernetes/test/images/agnhost/audit-proxy"
+	"k8s.io/kubernetes/test/images/agnhost/connect"
 	"k8s.io/kubernetes/test/images/agnhost/crd-conversion-webhook"
 	"k8s.io/kubernetes/test/images/agnhost/dns"
 	"k8s.io/kubernetes/test/images/agnhost/entrypoint-tester"
 	"k8s.io/kubernetes/test/images/agnhost/fakegitserver"
+	"k8s.io/kubernetes/test/images/agnhost/guestbook"
 	"k8s.io/kubernetes/test/images/agnhost/inclusterclient"
 	"k8s.io/kubernetes/test/images/agnhost/liveness"
 	"k8s.io/kubernetes/test/images/agnhost/logs-generator"
@@ -43,14 +45,17 @@ import (
 )
 
 func main() {
-	rootCmd := &cobra.Command{Use: "app"}
+	rootCmd := &cobra.Command{Use: "app", Version: "2.8"}
+
 	rootCmd.AddCommand(auditproxy.CmdAuditProxy)
+	rootCmd.AddCommand(connect.CmdConnect)
 	rootCmd.AddCommand(crdconvwebhook.CmdCrdConversionWebhook)
 	rootCmd.AddCommand(dns.CmdDNSSuffix)
 	rootCmd.AddCommand(dns.CmdDNSServerList)
 	rootCmd.AddCommand(dns.CmdEtcHosts)
 	rootCmd.AddCommand(entrypoint.CmdEntrypointTester)
 	rootCmd.AddCommand(fakegitserver.CmdFakeGitServer)
+	rootCmd.AddCommand(guestbook.CmdGuestbook)
 	rootCmd.AddCommand(inclusterclient.CmdInClusterClient)
 	rootCmd.AddCommand(liveness.CmdLiveness)
 	rootCmd.AddCommand(logsgen.CmdLogsGenerator)
