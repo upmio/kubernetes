@@ -13,7 +13,7 @@ var (
 	ErrHAGroupExistPod = newPredicateFailureError(HostHaGroupPred, "the node(s)  had pod with the same HAGroupLabel yet")
 )
 
-func HAGroupPredicates(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedulernodeinfo.NodeInfo) (bool, []PredicateFailureReason, error) {
+func HAGroupPredicates(pod *v1.Pod, meta Metadata, nodeInfo *schedulernodeinfo.NodeInfo) (bool, []PredicateFailureReason, error) {
 	ha, ok := pod.Labels[HostHAGroupLabel]
 	if !ok {
 		return true, nil, nil

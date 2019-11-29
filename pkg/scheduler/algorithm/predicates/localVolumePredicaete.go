@@ -27,7 +27,7 @@ var (
 	NodeUsageLimtAnnocation         = "node.usage.limit"
 )
 
-func LocalVolumePredicates(pod *v1.Pod, meta PredicateMetadata, nodeInfo *schedulernodeinfo.NodeInfo) (bool, []PredicateFailureReason, error) {
+func LocalVolumePredicates(pod *v1.Pod, meta Metadata, nodeInfo *schedulernodeinfo.NodeInfo) (bool, []PredicateFailureReason, error) {
 	requeststr, ok := pod.Annotations[PodLocalVolumeRequestAnnocation]
 	if !ok {
 		return true, nil, nil
