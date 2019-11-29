@@ -28,6 +28,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/events"
 	"k8s.io/kubernetes/pkg/kubelet/eviction"
 	"k8s.io/kubernetes/pkg/kubelet/lifecycle"
+	"k8s.io/kubernetes/pkg/kubelet/metrics"
 	kubetypes "k8s.io/kubernetes/pkg/kubelet/types"
 	"k8s.io/kubernetes/pkg/kubelet/util/format"
 	"k8s.io/kubernetes/pkg/scheduler/algorithm/predicates"
@@ -111,6 +112,11 @@ func (c *CriticalPodAdmissionHandler) evictPodsToFreeRequests(admitPod *v1.Pod, 
 			// In future syncPod loops, the kubelet will retry the pod deletion steps that it was stuck on.
 			continue
 		}
+		if len(insufficientResources) > 0 {
+			metrics.Preemptions.WithLabelValues(insufficientResources[0].resourceName.String()).Inc()
+		} else {
+			metrics.Preemptions.WithLabelValues("").Inc()
+		}
 		klog.Infof("preemption: pod %s evicted successfully", format.Pod(pod))
 	}
 	return nil
@@ -191,10 +197,9 @@ func (a admissionRequirementList) distance(pod *v1.Pod) float64 {
 	dist := float64(0)
 	for _, req := range a {
 		remainingRequest := float64(req.quantity - resource.GetResourceRequest(pod, req.resourceName))
-		if remainingRequest < 0 {
-			remainingRequest = 0
+		if remainingRequest > 0 {
+			dist += math.Pow(remainingRequest/float64(req.quantity), 2)
 		}
-		dist += math.Pow(remainingRequest/float64(req.quantity), 2)
 	}
 	return dist
 }
@@ -207,6 +212,9 @@ func (a admissionRequirementList) subtract(pods ...*v1.Pod) admissionRequirement
 		newQuantity := req.quantity
 		for _, pod := range pods {
 			newQuantity -= resource.GetResourceRequest(pod, req.resourceName)
+			if newQuantity <= 0 {
+				break
+			}
 		}
 		if newQuantity > 0 {
 			newList = append(newList, &admissionRequirement{

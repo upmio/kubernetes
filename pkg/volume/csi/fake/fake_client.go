@@ -120,11 +120,20 @@ func (f *NodeClient) GetNodePublishedVolumes() map[string]CSIVolume {
 	return f.nodePublishedVolumes
 }
 
+// AddNodePublishedVolume adds specified volume to nodePublishedVolumes
+func (f *NodeClient) AddNodePublishedVolume(volID, deviceMountPath string, volumeContext map[string]string) {
+	f.nodePublishedVolumes[volID] = CSIVolume{
+		Path:          deviceMountPath,
+		VolumeContext: volumeContext,
+	}
+}
+
 // GetNodeStagedVolumes returns node staged volumes
 func (f *NodeClient) GetNodeStagedVolumes() map[string]CSIVolume {
 	return f.nodeStagedVolumes
 }
 
+// AddNodeStagedVolume adds specified volume to nodeStagedVolumes
 func (f *NodeClient) AddNodeStagedVolume(volID, deviceMountPath string, volumeContext map[string]string) {
 	f.nodeStagedVolumes[volID] = CSIVolume{
 		Path:          deviceMountPath,
@@ -189,20 +198,23 @@ func (f *NodeClient) NodeStageVolume(ctx context.Context, req *csipb.NodeStageVo
 		return nil, errors.New("missing staging target path")
 	}
 
+	csiVol := CSIVolume{
+		Path:          req.GetStagingTargetPath(),
+		VolumeContext: req.GetVolumeContext(),
+	}
+
 	fsType := ""
 	fsTypes := "block|ext4|xfs|zfs"
 	mounted := req.GetVolumeCapability().GetMount()
 	if mounted != nil {
 		fsType = mounted.GetFsType()
+		csiVol.MountFlags = mounted.GetMountFlags()
 	}
 	if !strings.Contains(fsTypes, fsType) {
 		return nil, errors.New("invalid fstype")
 	}
 
-	f.nodeStagedVolumes[req.GetVolumeId()] = CSIVolume{
-		Path:          req.GetStagingTargetPath(),
-		VolumeContext: req.GetVolumeContext(),
-	}
+	f.nodeStagedVolumes[req.GetVolumeId()] = csiVol
 	return &csipb.NodeStageVolumeResponse{}, nil
 }
 
